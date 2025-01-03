@@ -1,7 +1,7 @@
 package com.github.rossilor95.jlox.parse;
 
 public sealed interface Token {
-    record Eof() implements Token { }
+    record EndOfFile() implements Token { }
     record Illegal() implements Token { }
 
     // Single-character tokens.
