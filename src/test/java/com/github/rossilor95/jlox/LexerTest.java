@@ -15,9 +15,7 @@ class LexerTest {
                 and class else false for fun if nil or print return super this true var while""";
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(
@@ -50,9 +48,7 @@ class LexerTest {
                 bar345baz""";
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(
@@ -71,9 +67,7 @@ class LexerTest {
                 456.789""";
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(
@@ -87,12 +81,11 @@ class LexerTest {
         // Given
         var source = """
                 "Hello, World!"
-                "Goodbye, Mars!""";
+                "Goodbye, Mars!"
+                """;
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(
@@ -109,9 +102,7 @@ class LexerTest {
                 == >= <= -= != += /= *=""";
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(
@@ -152,9 +143,7 @@ class LexerTest {
                  */""";
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(new Token.EndOfFile());
@@ -167,11 +156,22 @@ class LexerTest {
                 \t \n \r \n\r  """;
 
         // When
-        var lexer = new Lexer(source);
-        var tokens = new ArrayList<Token>();
-        lexer.forEachRemaining(tokens::add);
+        List<Token> tokens = lex(source);
 
         // Then
         assertThat(tokens).containsExactly(new Token.EndOfFile());
+    }
+
+    private List<Token> lex(String source) {
+        var tokens = new ArrayList<Token>();
+        var lexer = new Lexer(source);
+
+        Token tok;
+        do {
+            tok = lexer.readToken();
+            tokens.add(tok);
+        } while (!(tok instanceof Token.EndOfFile));
+
+        return tokens;
     }
 }
