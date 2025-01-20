@@ -4,8 +4,6 @@ import java.util.function.Supplier;
 
 public final class Lexer {
 
-    private final char NULL_CHAR = '\0';
-
     private final String source;
     private int position = -1;
 
@@ -14,7 +12,8 @@ public final class Lexer {
     }
 
     public Token readToken() {
-        char ch = nextChar();
+        advance(1);
+        char ch = isAtEnd() ? '\0' : source.charAt(position);
         return switch (ch) {
             case ' ', '\n', '\r', '\t' -> skipWhitespace();
             case '{' -> new Token.LeftBrace();
@@ -25,15 +24,15 @@ public final class Lexer {
             case ',' -> new Token.Comma();
             case '.' -> new Token.Dot();
             case '"' -> readString();
-            case '=' -> peek(1) == '=' ? advanceAndGet(Token.EqualEqual::new) : new Token.Equal();
-            case '!' -> peek(1) == '=' ? advanceAndGet(Token.NotEqual::new) : new Token.Bang();
-            case '<' -> peek(1) == '=' ? advanceAndGet(Token.LessEqual::new) : new Token.Less();
-            case '>' -> peek(1) == '=' ? advanceAndGet(Token.GreaterEqual::new) : new Token.Greater();
-            case '-' -> peek(1) == '=' ? advanceAndGet(Token.MinusEqual::new) : new Token.Minus();
-            case '+' -> peek(1) == '=' ? advanceAndGet(Token.PlusEqual::new) : new Token.Plus();
-            case '*' -> peek(1) == '=' ? advanceAndGet(Token.StarEqual::new) : new Token.Star();
+            case '=' -> peekChar(1) == '=' ? advanceAndGet(Token.EqualEqual::new) : new Token.Equal();
+            case '!' -> peekChar(1) == '=' ? advanceAndGet(Token.NotEqual::new) : new Token.Bang();
+            case '<' -> peekChar(1) == '=' ? advanceAndGet(Token.LessEqual::new) : new Token.Less();
+            case '>' -> peekChar(1) == '=' ? advanceAndGet(Token.GreaterEqual::new) : new Token.Greater();
+            case '-' -> peekChar(1) == '=' ? advanceAndGet(Token.MinusEqual::new) : new Token.Minus();
+            case '+' -> peekChar(1) == '=' ? advanceAndGet(Token.PlusEqual::new) : new Token.Plus();
+            case '*' -> peekChar(1) == '=' ? advanceAndGet(Token.StarEqual::new) : new Token.Star();
             case '/' -> handleSlash();
-            case NULL_CHAR -> new Token.EndOfFile();
+            case '\0' -> new Token.EndOfFile();
             default -> {
                 if (Character.isLetter(ch)) {
                     yield readName();
@@ -47,18 +46,18 @@ public final class Lexer {
         };
     }
 
-    private void advance() {
-        position += 1;
+    private void advance(int steps) {
+        position += steps;
     }
 
     private Token advanceAndGet(Supplier<Token> supplier) {
-        advance();
+        advance(1);
         return supplier.get();
     }
 
     private void advanceWhile(Supplier<Boolean> condition) {
         while (condition.get() && !isAtEnd()) {
-            advance();
+            advance(1);
         }
     }
 
@@ -67,7 +66,7 @@ public final class Lexer {
     }
 
     private Token handleSlash() {
-        return switch (peek(1)) {
+        return switch (peekChar(1)) {
             case '/' -> skipComment();
             case '*' -> skipBlockComment();
             case '=' -> advanceAndGet(Token.SlashEqual::new);
@@ -75,19 +74,14 @@ public final class Lexer {
         };
     }
 
-    private char nextChar() {
-        advance();
-        return isAtEnd() ? NULL_CHAR : source.charAt(position);
-    }
-
-    private char peek(final int ahead) {
-        int index = position + ahead;
-        return index >= source.length() ? NULL_CHAR : source.charAt(index);
+    private char peekChar(int offset) {
+        int targetPosition = position + offset;
+        return targetPosition >= source.length() ? '\0' : source.charAt(targetPosition);
     }
 
     private Token readName() {
         int start = position;
-        advanceWhile(() -> Character.isLetterOrDigit(peek(1)));
+        advanceWhile(() -> Character.isLetterOrDigit(peekChar(1)));
         String lexeme = source.substring(start, position + 1);
         return switch (lexeme) {
             case "and" -> new Token.And();
@@ -112,10 +106,10 @@ public final class Lexer {
 
     private Token.NumberLiteral readNumber() {
         int start = position;
-        advanceWhile(() -> Character.isDigit(peek(1)));
-        if (peek(1) == '.' && Character.isDigit(peek(2))) {
-            advance();
-            advanceWhile(() -> Character.isDigit(peek(1)));
+        advanceWhile(() -> Character.isDigit(peekChar(1)));
+        if (peekChar(1) == '.' && Character.isDigit(peekChar(2))) {
+            advance(1); // consume the '.'
+            advanceWhile(() -> Character.isDigit(peekChar(1)));
         }
         double lexeme = Double.parseDouble(source.substring(start, position + 1));
         return new Token.NumberLiteral(lexeme);
@@ -123,33 +117,32 @@ public final class Lexer {
 
     private Token.StringLiteral readString() {
         int start = position;
-        advanceWhile(() -> peek(1) != '"');
+        advanceWhile(() -> peekChar(1) != '"');
 
         Token.StringLiteral tok;
         if (isAtEnd()) {
             tok = new Token.StringLiteral("");
         } else {
-            advance();
+            advance(1); // consume the closing '"'
             tok = new Token.StringLiteral(source.substring(start + 1, position));
         }
         return tok;
     }
 
     private Token skipComment() {
-        advanceWhile(() -> peek(1) != '\n');
-        advance(); // consume the newline
+        advanceWhile(() -> peekChar(1) != '\n');
+        advance(1); // consume the newline
         return readToken();
     }
 
     private Token skipBlockComment() {
-        advanceWhile(() -> peek(1) != '*' || peek(2) != '/');
-        advance(); // consume the '*'
-        advance(); // consume the '/'
+        advanceWhile(() -> peekChar(1) != '*' || peekChar(2) != '/');
+        advance(2); // consume the '*' and '/'
         return readToken();
     }
 
     private Token skipWhitespace() {
-        advanceWhile(() -> Character.isWhitespace(peek(1)));
+        advanceWhile(() -> Character.isWhitespace(peekChar(1)));
         return readToken();
     }
 }
