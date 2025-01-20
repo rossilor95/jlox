@@ -162,6 +162,24 @@ class LexerTest {
         assertThat(tokens).containsExactly(new Token.EndOfFile());
     }
 
+    @Test
+    void shouldPeekTokensWithoutAdvancing() {
+        // Given
+        var source = """
+                fooBar + 456;""";
+        var lexer = new Lexer(source);
+
+        // When
+        var tok = lexer.readToken();
+
+        // Then
+        assertThat(lexer.peek(1)).isEqualTo(new Token.Plus());
+        assertThat(lexer.peek(2)).isEqualTo(new Token.NumberLiteral(456));
+        assertThat(lexer.peek(3)).isEqualTo(new Token.Semicolon());
+        assertThat(lexer.peek(4)).isEqualTo(new Token.EndOfFile());
+        assertThat(lexer.readToken()).isEqualTo((new Token.Plus()));
+    }
+
     private List<Token> lex(String source) {
         var tokens = new ArrayList<Token>();
         var lexer = new Lexer(source);

@@ -46,6 +46,16 @@ public final class Lexer {
         };
     }
 
+    Token peek(int offset) {
+        int start = position;
+        Token token = readToken();
+        for (int i = 1; i < offset; i += 1) {
+            token = readToken();
+        }
+        position = start;
+        return token;
+    }
+
     private void advance(int steps) {
         position += steps;
     }
