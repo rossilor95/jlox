@@ -163,6 +163,25 @@ class LexerTest {
     }
 
     @Test
+    void shouldLexIllegalCharacters() {
+        // Given
+        var source = """
+                @ # $ ^""";
+
+        // When
+        List<Token> tokens = lex(source);
+
+        // Then
+        assertThat(tokens).containsExactly(
+                new Token.Illegal(),
+                new Token.Illegal(),
+                new Token.Illegal(),
+                new Token.Illegal(),
+                new Token.EndOfFile()
+        );
+    }
+    
+    @Test
     void shouldPeekTokensWithoutAdvancing() {
         // Given
         var source = """
@@ -173,6 +192,7 @@ class LexerTest {
         var tok = lexer.readToken();
 
         // Then
+        assertThat(tok).isEqualTo(new Token.Identifier("fooBar"));
         assertThat(lexer.peek(1)).isEqualTo(new Token.Plus());
         assertThat(lexer.peek(2)).isEqualTo(new Token.NumberLiteral(456));
         assertThat(lexer.peek(3)).isEqualTo(new Token.Semicolon());
