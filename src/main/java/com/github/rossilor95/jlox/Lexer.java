@@ -11,7 +11,7 @@ public final class Lexer {
         this.source = source;
     }
 
-    public Token readToken() {
+    public Token next() {
         advance(1);
         char ch = isAtEnd() ? '\0' : source.charAt(position);
         return switch (ch) {
@@ -48,9 +48,9 @@ public final class Lexer {
 
     Token peek(int offset) {
         int start = position;
-        Token token = readToken();
+        Token token = next();
         for (int i = 1; i < offset; i += 1) {
-            token = readToken();
+            token = next();
         }
         position = start;
         return token;
@@ -58,6 +58,20 @@ public final class Lexer {
 
     private void advance(int steps) {
         position += steps;
+    }
+
+    private boolean isAtEnd() {
+        return position >= source.length();
+    }
+
+    private char peekChar(int offset) {
+        int targetPosition = position + offset;
+        return targetPosition >= source.length() ? '\0' : source.charAt(targetPosition);
+    }
+
+    private Token skipWhitespace() {
+        advanceWhile(() -> Character.isWhitespace(peekChar(1)));
+        return next();
     }
 
     private Token advanceAndGet(Supplier<Token> supplier) {
@@ -69,24 +83,6 @@ public final class Lexer {
         while (condition.get() && !isAtEnd()) {
             advance(1);
         }
-    }
-
-    private boolean isAtEnd() {
-        return position >= source.length();
-    }
-
-    private Token handleSlash() {
-        return switch (peekChar(1)) {
-            case '/' -> skipComment();
-            case '*' -> skipBlockComment();
-            case '=' -> advanceAndGet(Token.SlashEqual::new);
-            default -> new Token.Slash();
-        };
-    }
-
-    private char peekChar(int offset) {
-        int targetPosition = position + offset;
-        return targetPosition >= source.length() ? '\0' : source.charAt(targetPosition);
     }
 
     private Token readName() {
@@ -139,20 +135,24 @@ public final class Lexer {
         return tok;
     }
 
+    private Token handleSlash() {
+        return switch (peekChar(1)) {
+            case '/' -> skipComment();
+            case '*' -> skipBlockComment();
+            case '=' -> advanceAndGet(Token.SlashEqual::new);
+            default -> new Token.Slash();
+        };
+    }
+
     private Token skipComment() {
         advanceWhile(() -> peekChar(1) != '\n');
         advance(1); // consume the newline
-        return readToken();
+        return next();
     }
 
     private Token skipBlockComment() {
         advanceWhile(() -> peekChar(1) != '*' || peekChar(2) != '/');
         advance(2); // consume the '*' and '/'
-        return readToken();
-    }
-
-    private Token skipWhitespace() {
-        advanceWhile(() -> Character.isWhitespace(peekChar(1)));
-        return readToken();
+        return next();
     }
 }

@@ -180,7 +180,7 @@ class LexerTest {
                 new Token.EndOfFile()
         );
     }
-    
+
     @Test
     void shouldPeekTokensWithoutAdvancing() {
         // Given
@@ -189,7 +189,7 @@ class LexerTest {
         var lexer = new Lexer(source);
 
         // When
-        var tok = lexer.readToken();
+        var tok = lexer.next();
 
         // Then
         assertThat(tok).isEqualTo(new Token.Identifier("fooBar"));
@@ -197,19 +197,17 @@ class LexerTest {
         assertThat(lexer.peek(2)).isEqualTo(new Token.NumberLiteral(456));
         assertThat(lexer.peek(3)).isEqualTo(new Token.Semicolon());
         assertThat(lexer.peek(4)).isEqualTo(new Token.EndOfFile());
-        assertThat(lexer.readToken()).isEqualTo((new Token.Plus()));
+        assertThat(lexer.next()).isEqualTo((new Token.Plus()));
     }
 
     private List<Token> lex(String source) {
         var tokens = new ArrayList<Token>();
         var lexer = new Lexer(source);
-
         Token tok;
         do {
-            tok = lexer.readToken();
+            tok = lexer.next();
             tokens.add(tok);
         } while (!(tok instanceof Token.EndOfFile));
-
         return tokens;
     }
 }
