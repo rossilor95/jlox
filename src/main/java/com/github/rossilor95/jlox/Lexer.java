@@ -1,8 +1,9 @@
 package com.github.rossilor95.jlox;
 
+import java.util.Iterator;
 import java.util.function.Supplier;
 
-public final class Lexer {
+public final class Lexer implements Iterator<Token> {
 
     private final String source;
     private int position = -1;
@@ -13,7 +14,7 @@ public final class Lexer {
 
     public Token next() {
         advance(1);
-        char ch = isAtEnd() ? '\0' : source.charAt(position);
+        char ch = hasNext() ? source.charAt(position) : '\0';
         return switch (ch) {
             case ' ', '\n', '\r', '\t' -> skipWhitespace();
             case '{' -> new Token.LeftBrace();
@@ -46,7 +47,11 @@ public final class Lexer {
         };
     }
 
-    Token peek(int offset) {
+    public boolean hasNext() {
+        return position < source.length();
+    }
+
+    public Token peek(int offset) {
         int start = position;
         Token token = next();
         for (int i = 1; i < offset; i += 1) {
@@ -58,10 +63,6 @@ public final class Lexer {
 
     private void advance(int steps) {
         position += steps;
-    }
-
-    private boolean isAtEnd() {
-        return position >= source.length();
     }
 
     private char peekChar(int offset) {
@@ -80,7 +81,7 @@ public final class Lexer {
     }
 
     private void advanceWhile(Supplier<Boolean> condition) {
-        while (condition.get() && !isAtEnd()) {
+        while (condition.get() && hasNext()) {
             advance(1);
         }
     }
@@ -126,11 +127,11 @@ public final class Lexer {
         advanceWhile(() -> peekChar(1) != '"');
 
         Token.StringLiteral tok;
-        if (isAtEnd()) {
-            tok = new Token.StringLiteral("");
-        } else {
+        if (hasNext()) {
             advance(1); // consume the closing '"'
             tok = new Token.StringLiteral(source.substring(start + 1, position));
+        } else {
+            tok = new Token.StringLiteral("");
         }
         return tok;
     }

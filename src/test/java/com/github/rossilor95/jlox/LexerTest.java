@@ -201,13 +201,9 @@ class LexerTest {
     }
 
     private List<Token> lex(String source) {
-        var tokens = new ArrayList<Token>();
         var lexer = new Lexer(source);
-        Token tok;
-        do {
-            tok = lexer.next();
-            tokens.add(tok);
-        } while (!(tok instanceof Token.EndOfFile));
+        var tokens = new ArrayList<Token>();
+        lexer.forEachRemaining(tokens::add);
         return tokens;
     }
 }
